@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Авторизация</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin: 0;
+            height: 100vh;
+        }
+
+        .login-limit-width {
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+<section class="section">
+    <div class="container">
+        <h1 class="title is-size-1">NSD Digital Token Platform</h1>
+        <p class="subtitle">Авторизация</p>
+        {% if error %}
+        <div class="notification is-danger is-light login-limit-width">
+            <b>Ошибка</b><br> {{ error }}
+        </div>
+        {% endif %}
+        <form style="margin-top: 40px" class="login-limit-width" action="" method="post">
+            <input type="hidden" name="type" value="login_form">
+            <input class="input is-medium" name="email" placeholder="Почта" type="text">
+            <br><br>
+            <input class="input is-medium" name="password" placeholder="Пароль" type="password">
+            <br><br><br>
+            <button style="margin-right: 10px" class="button is-info">Войти</button>
+            <a class="button" href="/registration">Регистрация</a>
+        </form>
+    </div>
+</section>
+</body>
+</html>
