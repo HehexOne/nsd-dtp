@@ -1,46 +1,47 @@
 from functools import wraps
 
 from flask import Flask, session, request, render_template, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
 import hashlib
+from mysql.connector import connect
+from keychain import *
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = url = 'sqlite:///data.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = "nsdh@ckT3chath0n"
-db = SQLAlchemy(app)
+connection = connect(host=db_host, port=db_port, user=db_user, password=db_password, db=db_name)
+db_cursor = connection.cursor()
 
 
-class Client(db.Model):
-    id = db.Column(db.Integer(), autoincrement=True, primary_key=True)
-    name = db.Column(db.String(256), nullable=True)
-    inn = db.Column(db.String(12), nullable=False, unique=True)
-    email = db.Column(db.String(128), nullable=False, unique=True)
-    password_hash = db.Column(db.String(256), nullable=False)
-    balance = db.Column(db.Float(), default=0.0, nullable=False)
-    is_issuer = db.Column(db.Boolean, default=False, nullable=False)
-    assets = db.relationship('DigitalAsset',
-                             backref=db.backref('Owner',
-                                                lazy=True))
-    assets_created = db.relationship('DigitalAssets',
-                                     backref=db.backref('Creator',
-                                                        lazy=True))
-
-
-class DigitalAsset(db.Model):
-    id = db.Column(db.Integer(), autoincrement=True, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    balance = db.Column(db.Float, nullable=False)
-    token = db.Column(db.String(512), nullable=True)
-    is_approved = db.Column(db.Boolean, default=False, nullable=False)
-
-
-class Operator(db.Model):
-    id = db.Column(db.Integer(), autoincrement=True, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    surname = db.Column(db.String(128), nullable=False)
-    email = db.Column(db.String(128), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
+# TODO MySQL
+# class Client(db.Model):
+#     id = db.Column(db.Integer(), autoincrement=True, primary_key=True)
+#     name = db.Column(db.String(256), nullable=True)
+#     inn = db.Column(db.String(12), nullable=False, unique=True)
+#     email = db.Column(db.String(128), nullable=False, unique=True)
+#     password_hash = db.Column(db.String(256), nullable=False)
+#     balance = db.Column(db.Float(), default=0.0, nullable=False)
+#     is_issuer = db.Column(db.Boolean, default=False, nullable=False)
+#     assets = db.relationship('DigitalAsset',
+#                              backref=db.backref('Owner',
+#                                                 lazy=True))
+#     assets_created = db.relationship('DigitalAssets',
+#                                      backref=db.backref('Creator',
+#                                                         lazy=True))
+#
+#
+# class DigitalAsset(db.Model):
+#     id = db.Column(db.Integer(), autoincrement=True, primary_key=True)
+#     name = db.Column(db.String(128), nullable=False)
+#     balance = db.Column(db.Float, nullable=False)
+#     token = db.Column(db.String(512), nullable=True)
+#     is_approved = db.Column(db.Boolean, default=False, nullable=False)
+#
+#
+# class Operator(db.Model):
+#     id = db.Column(db.Integer(), autoincrement=True, primary_key=True)
+#     name = db.Column(db.String(128), nullable=False)
+#     surname = db.Column(db.String(128), nullable=False)
+#     email = db.Column(db.String(128), unique=True, nullable=False)
+#     password_hash = db.Column(db.String(256), nullable=False)
 
 
 def clientIssuer(f):
@@ -78,8 +79,9 @@ def authorization():
             password = request.form.get("password", False)
             if all([email, password]):
                 password_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
-                client_user = Client.query.filter_by(email=email, password_hash=password_hash).first()
-                operator_user = Operator.query.filter_by(email=email, password_hash=password_hash).first()
+                # TODO MySQL
+                # client_user = Client.query.filter_by(email=email, password_hash=password_hash).first()
+                # operator_user = Operator.query.filter_by(email=email, password_hash=password_hash).first()
                 if client_user:
                     session['id'] = client_user.id
                     session['account_type'] = "issuer" if client_user.account_type == 0 else "client"
