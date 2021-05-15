@@ -1,47 +1,14 @@
-from functools import wraps
-
+from funtools import wraps
 from flask import Flask, session, request, render_template, redirect, url_for
 import hashlib
 from mysql.connector import connect
 from keychain import *
 
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "nsdh@ckT3chath0n"
-connection = connect(host=db_host, port=db_port, user=db_user, password=db_password, db=db_name)
+connection = connect(host=db_host, port=db_port, user=db_user, password=db_password, db=db_name, ssl_ca=db_ca_cert)
 db_cursor = connection.cursor()
-
-
-# TODO MySQL
-# class Client(db.Model):
-#     id = db.Column(db.Integer(), autoincrement=True, primary_key=True)
-#     name = db.Column(db.String(256), nullable=True)
-#     inn = db.Column(db.String(12), nullable=False, unique=True)
-#     email = db.Column(db.String(128), nullable=False, unique=True)
-#     password_hash = db.Column(db.String(256), nullable=False)
-#     balance = db.Column(db.Float(), default=0.0, nullable=False)
-#     is_issuer = db.Column(db.Boolean, default=False, nullable=False)
-#     assets = db.relationship('DigitalAsset',
-#                              backref=db.backref('Owner',
-#                                                 lazy=True))
-#     assets_created = db.relationship('DigitalAssets',
-#                                      backref=db.backref('Creator',
-#                                                         lazy=True))
-#
-#
-# class DigitalAsset(db.Model):
-#     id = db.Column(db.Integer(), autoincrement=True, primary_key=True)
-#     name = db.Column(db.String(128), nullable=False)
-#     balance = db.Column(db.Float, nullable=False)
-#     token = db.Column(db.String(512), nullable=True)
-#     is_approved = db.Column(db.Boolean, default=False, nullable=False)
-#
-#
-# class Operator(db.Model):
-#     id = db.Column(db.Integer(), autoincrement=True, primary_key=True)
-#     name = db.Column(db.String(128), nullable=False)
-#     surname = db.Column(db.String(128), nullable=False)
-#     email = db.Column(db.String(128), unique=True, nullable=False)
-#     password_hash = db.Column(db.String(256), nullable=False)
 
 
 def clientIssuer(f):
@@ -54,6 +21,7 @@ def clientIssuer(f):
             return f(*args, **kwargs)
         else:
             return redirect(url_for(f'/operator', next=request.url))
+
     return decorated_function
 
 
@@ -67,6 +35,7 @@ def operator(f):
             return redirect(url_for(f'/{session.get("account_type")}', next=request.url))
         else:
             return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -79,15 +48,18 @@ def authorization():
             password = request.form.get("password", False)
             if all([email, password]):
                 password_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
-                # TODO MySQL
-                # client_user = Client.query.filter_by(email=email, password_hash=password_hash).first()
-                # operator_user = Operator.query.filter_by(email=email, password_hash=password_hash).first()
+                db_cursor.execute(
+                    f"SELECT id, is_issuer CLIENT WHERE email='{email}' AND password='{password_hash}' LIMIT 1")
+                client_user = db_cursor.fetchone()
+                db_cursor.execute(
+                    f"SELECT id FROM Operator WHERE email='{email}' AND password='{password_hash}' LIMIT 1")
+                operator_user = db_cursor.fetchone()
                 if client_user:
-                    session['id'] = client_user.id
-                    session['account_type'] = "issuer" if client_user.account_type == 0 else "client"
+                    session['id'] = client_user[0]
+                    session['account_type'] = "issuer" if client_user[1] == 0 else "client"
                     return redirect(f"/{session['account_type']}/")
                 elif operator_user:
-                    session['id'] = operator_user.id
+                    session['id'] = operator_user[0]
                     session['account_type'] = "operator"
                     return redirect("/operator/")
                 else:
@@ -111,5 +83,4 @@ def logout():
 
 
 if __name__ == '__main__':
-    db.create_all()
     app.run(host="0.0.0.0", port=9000)
