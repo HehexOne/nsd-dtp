@@ -21,7 +21,7 @@
 </head>
 <body>
 <section class="section">
-    <div class="container">
+    <div style="padding: 100px 10px 10px;" class="container">
         <h1 class="title is-size-1">NSD Digital Token Platform</h1>
         <p class="subtitle">Регистрация</p>
         {% if error %}
@@ -42,7 +42,7 @@
             <label class="label">Данные аккаунта</label>
             <input class="input is-medium" name="name" placeholder="Имя Фамилия/Название организации" type="text">
             <br><br>
-            <input class="input is-medium" name="inn" placeholder="ИНН" type="number">
+            <input class="input is-medium" name="inn" placeholder="ИНН" minlength="10" maxlength="12" type="number">
             <br><br>
             <input class="input is-medium" name="email" placeholder="Почта" type="text">
             <br><br>
