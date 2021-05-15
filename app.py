@@ -29,12 +29,6 @@ def unban_client(client_id):
     connection.commit()
 
 
-def disapprove_client(client_id):
-    query = f"UPDATE nsd.Client SET is_approved=FALSE WHERE id={client_id}"
-    db_cursor.execute(query)
-    connection.commit()
-
-
 def ban_asset(asset_id):
     query = f"UPDATE nsd.DigitalAsset SET is_banned=TRUE WHERE id={asset_id}"
     db_cursor.execute(query)
@@ -49,12 +43,6 @@ def approve_asset(asset_id):
 
 def unban_asset(asset_id):
     query = f"UPDATE nsd.DigitalAsset SET is_banned=FALSE WHERE id={asset_id}"
-    db_cursor.execute(query)
-    connection.commit()
-
-
-def disapprove_asset(asset_id):
-    query = f"UPDATE nsd.DigitalAsset SET is_approved=FALSE WHERE id={asset_id}"
     db_cursor.execute(query)
     connection.commit()
 
@@ -255,7 +243,8 @@ def registration():
                 else:
                     return render_template("registration.html", error="Неверный тип аккаунта!")
                 password_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
-                query = f"INSERT INTO nsd.Client (name, inn, email, password_hash, is_issuer, who_approve, address) VALUES " \
+                query = f"INSERT INTO nsd.Client (name, inn, email, password_hash, is_issuer," \
+                        f" who_approve, address) VALUES " \
                         f"('{name}', '{inn}', '{email}', '{password_hash}', {account_type_id}," \
                         f" (SELECT id FROM nsd.Operator WHERE is_banned=FALSE ORDER BY RAND() LIMIT 1), '{address}');"
                 try:
@@ -296,9 +285,9 @@ def operator_index():
     return render_template("operator_index.html", name=operator_data['name'])
 
 
-@app.route("/operator/users", methods=["GET", "POST"])
+@app.route("/operator/clients", methods=["GET", "POST"])
 @operator
-def operator_users():
+def operator_clients():
     if request.method == "POST":
         client_id = request.form.get("client_id", None)
         solution = request.form.get("solution", None)
@@ -311,12 +300,12 @@ def operator_users():
                 else:
                     ban_client(client_id)
     client = get_client_for_approval(session.get("id"))
-    return render_template("operator_users.html", client=client)
+    return render_template("operator_clients.html", client=client)
 
 
 @app.route("/operator/assets", methods=["GET", "POST"])
 @operator
-def operator_users():
+def operator_assets():
     if request.method == "POST":
         asset_id = request.form.get("asset_id", None)
         solution = request.form.get("solution", None)
@@ -329,7 +318,107 @@ def operator_users():
                 else:
                     ban_asset(asset_id)
     asset = get_digital_asset_for_approval(session.get("id"))
-    return render_template("operator_users.html", asset=asset)
+    return render_template("operator_clients.html", asset=asset)
+
+
+# TODO СДЕЛАЙ ЭТО!
+@app.route("/operator/clients-all")
+@operator
+def operator_clients_all():
+    query = "SELECT id FROM nsd.Client"
+    db_cursor.execute(query)
+    result = db_cursor.fetchall()
+    connection.commit()
+    clients = []
+    for client in result:
+        clients.append(get_client_by_id(client[0]))
+    return render_template("operator_clients_all.html", clients=clients)
+
+
+# TODO СДЕЛАЙ ЭТО!
+@app.route("/operator/assets-all")
+@operator
+def operator_assets_all():
+    query = "SELECT id FROM nsd.DigitalAsset"
+    db_cursor.execute(query)
+    result = db_cursor.fetchall()
+    connection.commit()
+    assets = []
+    for asset in result:
+        assets.append(get_digital_asset_by_id(asset[0]))
+    return render_template("operator_assets_all.html", assets=assets)
+
+
+@app.route("/operator/ban-client")
+@operator
+def operator_ban_user():
+    client_id = request.args.get("client_id")
+    next_url = request.args.get("next")
+    if client_id:
+        ban_client(client_id)
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for("operator_clients_all"))
+
+
+@app.route("/operator/ban-asset")
+@operator
+def operator_ban_asset():
+    asset_id = request.args.get("asset_id")
+    next_url = request.args.get("next")
+    if asset_id:
+        ban_asset(asset_id)
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for("operator_assets_all"))
+
+
+@app.route("/operator/unban-client")
+@operator
+def operator_unban_client():
+    client_id = request.args.get("client_id")
+    next_url = request.args.get("next")
+    if client_id:
+        unban_client(client_id)
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for("operator_clients_all"))
+
+
+@app.route("/operator/unban-asset")
+@operator
+def operator_unban_asset():
+    asset_id = request.args.get("asset_id")
+    next_url = request.args.get("next")
+    if asset_id:
+        unban_asset(asset_id)
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for("operator_assets_all"))
+
+
+@app.route("/operator/approve-client")
+@operator
+def operator_approve_client():
+    client_id = request.args.get("client_id")
+    next_url = request.args.get("next")
+    if client_id:
+        approve_client(client_id)
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for("operator_clients_all"))
+
+
+@app.route("/operator/approve-asset")
+@operator
+def operator_approve_asset():
+    asset_id = request.args.get("asset_id")
+    next_url = request.args.get("next")
+    if asset_id:
+        approve_asset(asset_id)
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for("operator_assets_all"))
 
 
 @app.route("/approval")
