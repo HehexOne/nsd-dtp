@@ -321,7 +321,6 @@ def operator_assets():
     return render_template("operator_clients.html", asset=asset)
 
 
-# TODO СДЕЛАЙ ЭТО!
 @app.route("/operator/clients-all")
 @operator
 def operator_clients_all():
@@ -335,7 +334,6 @@ def operator_clients_all():
     return render_template("operator_clients_all.html", clients=clients)
 
 
-# TODO СДЕЛАЙ ЭТО!
 @app.route("/operator/assets-all")
 @operator
 def operator_assets_all():
@@ -419,6 +417,20 @@ def operator_approve_asset():
     if next_url:
         return redirect(next_url)
     return redirect(url_for("operator_assets_all"))
+
+
+@app.route("/client/payment", methods=["GET", "POST"])
+def client_payment():
+    if request.method == "POST":
+        amount = request.form.get("amount")
+        if amount:
+            client_data = get_client_by_id(session.get("id"))
+            amount = float(amount)
+            query = f"UPDATE nsd.Client SET balance={client_data['balance'] + amount} WHERE id={client_data['id']}"
+            db_cursor.execute(query)
+            connection.commit()
+            return redirect(url_for("client_index"))
+    return render_template("clients_payment.html")
 
 
 @app.route("/approval")

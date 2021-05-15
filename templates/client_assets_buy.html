@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Главная страница</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <style>
+        body {
+            margin: 0;
+        }
+
+        .centered {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        main {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            flex-wrap: wrap;
+            align-items: center;
+            width: 100%;
+        }
+
+        #main-block {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+        }
+
+        .card {
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+<nav role="navigation" aria-label="main navigation" class="navbar">
+    <div style="padding: 10px;" class="navbar-menu is-active">
+        <div class="navbar-brand">
+            <a href="/operator/">
+                <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Логотип">
+            </a>
+        </div>
+        <div class="navbar-divider"></div>
+        <div class="navbar-end">
+            <a class="navbar-item button is-danger is-light is-outlined" href="/logout">Выйти</a>
+        </div>
+    </div>
+</nav>
+<h1 style="margin-top: 30px;" class="title has-text-centered">Активы</h1>
+<main>
+    <div id="main-block">
+        {% for asset in assets %}
+        <div class="card">
+            <div class="card-content">
+                <p class="title">{{ client['name'] }}</p>
+                <p class="subtitle">
+                        Сумма: {{ asset['balance'] }}<br>
+                        Количество: {{ asset['inn'] }}<br>
+                        Процент: {{ asset['percent'] }}<br>
+                        Действителен до: {{ asset['due_to'] }}
+                    </p>
+            </div>
+            <footer class="card-footer">
+                {% if not asset['is_approved'] %}
+                    <a class="card-footer-item button is-primary is-medium" href="/operator/approve-asset?asset_id={{ asset['id'] }}">Одобрить</a>
+                {% else %}
+                    <button class="card-footer-item button is-medium" disabled>Доступ разрешён</button>
+                {% endif %}
+
+                {% if not asset['is_banned'] %}
+                    <a class="card-footer-item button is-danger is-medium" href="/operator/asset-client?asset_id={{ asset['id'] }}">Заблокировать</a>
+                {% else %}
+                    <a class="card-footer-item button is-danger is-outlined is-medium" href="/operator/asset-client?asset_id={{ asset['id'] }}">Разблокировать</a>
+                {% endif %}
+            </footer>
+        </div>
+        {% endfor %}
+    </div>
+</main>
+</body>
+</html>
