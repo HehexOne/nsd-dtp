@@ -31,9 +31,9 @@
         {% endif %}
         <form style="margin-top: 40px" class="login-limit-width" action="" method="post">
             <input type="hidden" name="type" value="login_form">
-            <input class="input is-medium" name="email" placeholder="Почта" type="text">
+            <input class="input is-medium" name="email" minlength="8" maxlength="128" placeholder="Почта" type="text" required>
             <br><br>
-            <input class="input is-medium" name="password" placeholder="Пароль" type="password">
+            <input class="input is-medium" name="password" minlength="8" placeholder="Пароль" type="password" required>
             <br><br><br>
             <button style="margin-right: 10px" class="button is-info">Войти</button>
             <a class="button" href="/registration">Регистрация</a>

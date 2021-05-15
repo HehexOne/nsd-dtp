@@ -7,10 +7,59 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Главная страница</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <style>
+        .centered {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
-<p class="subtitle is-1">Ваш id: {{ session['id'] }}</p>
-<p class="subtitle is-1">Ваш тип аккаунта: {{ session['id'] }}</p>
-<a class="button is-medium" href="/logout">Выйти из аккаунта</a>
+<nav role="navigation" aria-label="main navigation" class="navbar">
+    <div style="padding: 10px;" class="navbar-menu is-active">
+        <div class="navbar-brand">
+            <a href="/operator/">
+                <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Логотип">
+            </a>
+        </div>
+        <div class="navbar-end">
+            <a class="navbar-item button is-danger is-light is-outlined" href="/logout">Выйти</a>
+        </div>
+    </div>
+</nav>
+<section class="section is-center">
+    <div class="container">
+        <h1 style="margin-top: 75px; margin-bottom: 80px; font-weight: 1000; font-size: 38px;"
+            class="title has-text-centered">NSD Digital Token Platform</h1>
+        <h1 class="title has-text-centered">Здравствуйте, {{ name }}!</h1>
+        <p class="has-text-centered">Тип аккаунта: Оператор</p>
+        <p style="margin-top: 75px" class="subtitle has-text-centered">Выберите тип заявок, которые нужно одобрить</p>
+    </div>
+    <div style="margin-top: 50px;" class=" container centered">
+        <div style="max-width: 400px;" class="columns">
+            <div class="column">
+                <a href="/operator/assets" style="width: 100%" class="button is-light is-outlined is-info is-medium">Активы</a>
+            </div>
+            <div class="column">
+                <a href="/operator/users" style="width: 100%" class="button is-light is-outlined is-info is-medium">Пользователи</a>
+            </div>
+        </div>
+    </div>
+    <br><br>
+    <p style="margin-top: 20px" class="subtitle has-text-centered">Перейти на страницы со всеми данными</p>
+    <div style="margin-top: 25px;" class=" container centered">
+        <div style="max-width: 400px;" class="columns">
+            <div class="column">
+                <a href="/operator/assets-all" style="width: 100%" class="button is-light is-outlined is-primary is-medium">Все активы</a>
+            </div>
+            <div class="column">
+                <a href="/operator/users-all" style="width: 100%" class="button is-light is-outlined is-primary is-medium">Все пользователи</a>
+            </div>
+        </div>
+    </div>
+</section>
 </body>
 </html>

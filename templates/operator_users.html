@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Одобрение пользователей</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <style>
+        body {
+            margin: 0;
+            height: 90vh;
+        }
+
+        #center-section {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+    </style>
+</head>
+<body>
+<nav role="navigation" aria-label="main navigation" class="navbar">
+    <div style="padding: 10px;" class="navbar-menu is-active">
+        <div class="navbar-brand">
+            <a href="/operator/">
+                <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Логотип">
+            </a>
+        </div>
+        <div class="navbar-end">
+            <a class="navbar-item button is-danger is-light is-outlined" href="/logout">Выйти</a>
+        </div>
+    </div>
+</nav>
+<section id="center-section" class="section">
+    <div class="columns">
+        <div class="column"></div>
+        <div class="column is-full">
+            {% if client %}
+            <div class="card">
+                <div class="card-content">
+                    <p class="title">{{ client['name'] }}</p><br>
+                    <p class="subtitle">
+                        Тип аккаунта: {% if client['is_issuer'] %}Эмитент{% else %}Инвестор{% endif %}<br>
+                        ИНН: {{ client['inn'] }}<br>
+                        Адрес: {{ client['address'] }}<br>
+                        Email: {{ client['email'] }}
+                    </p>
+                </div>
+                <footer class="card-footer">
+                    <form class="card-footer-item" action="" method="post">
+                        <input type="hidden" name="solution" value="ban">
+                    <input type="hidden" name="client_id" value="{{ client['id'] }}">
+                        <span>
+                        <button type="submit" class="button is-danger is-medium">Отклонить</button>
+                        </span>
+                    </form>
+                    <form class="card-footer-item" action="" method="post">
+                        <input type="hidden" name="solution" value="approve">
+                    <input type="hidden" name="client_id" value="{{ client['id'] }}">
+                        <span>
+                        <button type="submit" class="button is-primary is-medium">Одобрить</button>
+                        </span>
+                    </form>
+                </footer>
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-content">
+                    <p class="title">На этом всё :)</p>
+                    <p class="subtitle">Данные для одобрения на данный момент закончились!</p>
+                </div>
+            </div>
+            {% endif %}
+            <br>
+            <div class="card">
+                <div class="card-content">
+                    <p class="label">Действия</p>
+                    <a href="/operator/">Вернуться в главное меню</a>
+                </div>
+            </div>
+        </div>
+        <div class="column"></div>
+    </div>
+</section>
+</body>
+</html>

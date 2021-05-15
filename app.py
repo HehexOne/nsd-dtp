@@ -4,7 +4,6 @@ import hashlib
 from mysql.connector import connect
 from keychain import *
 
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "nsdh@ckT3chath0n"
 connection = connect(host=db_host, port=db_port, user=db_user, password=db_password, ssl_ca=db_ca_cert)
@@ -12,33 +11,149 @@ db_cursor = connection.cursor()
 db_cursor.execute("USE nsd;")
 
 
-def get_client_by_id(id):
-    db_cursor.execute(f"SELECT * FROM Client WHERE id={id} LIMIT 1;")
+def ban_client(client_id):
+    query = f"UPDATE nsd.Client SET is_banned=TRUE WHERE id={client_id}"
+    db_cursor.execute(query)
+    connection.commit()
+
+
+def approve_client(client_id):
+    query = f"UPDATE nsd.Client SET is_approved=TRUE WHERE id={client_id}"
+    db_cursor.execute(query)
+    connection.commit()
+
+
+def unban_client(client_id):
+    query = f"UPDATE nsd.Client SET is_banned=FALSE WHERE id={client_id}"
+    db_cursor.execute(query)
+    connection.commit()
+
+
+def disapprove_client(client_id):
+    query = f"UPDATE nsd.Client SET is_approved=FALSE WHERE id={client_id}"
+    db_cursor.execute(query)
+    connection.commit()
+
+
+def ban_asset(asset_id):
+    query = f"UPDATE nsd.DigitalAsset SET is_banned=TRUE WHERE id={asset_id}"
+    db_cursor.execute(query)
+    connection.commit()
+
+
+def approve_asset(asset_id):
+    query = f"UPDATE nsd.DigitalAsset SET is_approved=TRUE WHERE id={asset_id}"
+    db_cursor.execute(query)
+    connection.commit()
+
+
+def unban_asset(asset_id):
+    query = f"UPDATE nsd.DigitalAsset SET is_banned=FALSE WHERE id={asset_id}"
+    db_cursor.execute(query)
+    connection.commit()
+
+
+def disapprove_asset(asset_id):
+    query = f"UPDATE nsd.DigitalAsset SET is_approved=FALSE WHERE id={asset_id}"
+    db_cursor.execute(query)
+    connection.commit()
+
+
+def get_client_for_approval(operator_id):
+    query = f"SELECT * FROM nsd.Client WHERE is_approved=FALSE " \
+            f"AND is_banned=FALSE AND who_approve={operator_id} LIMIT 1"
+    db_cursor.execute(query)
+    result = db_cursor.fetchone()
+    connection.commit()
+    if result:
+        return {
+            "id": result[0],
+            "name": result[1],
+            "inn": result[2],
+            "address": result[3],
+            "email": result[4],
+            "password_hash": result[5],
+            "balance": result[6],
+            "is_issuer": result[7],
+            "is_approved": result[8],
+            "is_banned": result[9],
+            "who_approve": result[10]
+        }
+    else:
+        return None
+
+
+def get_digital_asset_for_approval(operator_id):
+    query = f"SELECT * FROM nsd.DigitalAsset WHERE is_approved=FALSE " \
+            f"AND is_banned=FALSE AND who_approve={operator_id} LIMIT 1"
+    db_cursor.execute(query)
+    result = db_cursor.fetchone()
+    connection.commit()
+    if result:
+        return {
+            "id": result[0],
+            "name": result[1],
+            "who_approve": result[2],
+            "balance": result[3],
+            "percent": result[4],
+            "quantity": result[5],
+            "due_to": result[6],
+            "is_approved": result[7],
+            "is_banned": result[8],
+            "owner_id": result[9]
+        }
+    else:
+        return None
+
+
+def get_client_by_id(ident):
+    db_cursor.execute(f"SELECT * FROM nsd.Client WHERE id={ident} LIMIT 1;")
     client_data = db_cursor.fetchone()
     connection.commit()
     return {
         "id": client_data[0],
         "name": client_data[1],
         "inn": client_data[2],
-        "email": client_data[3],
-        "password_hash": client_data[4],
-        "balance": client_data[5],
-        "is_issuer": client_data[6],
-        "is_approved": client_data[7],
-        "is_banned": client_data[8]
+        "address": client_data[3],
+        "email": client_data[4],
+        "password_hash": client_data[5],
+        "balance": client_data[6],
+        "is_issuer": client_data[7],
+        "is_approved": client_data[8],
+        "is_banned": client_data[9],
+        "who_approve": client_data[10]
     }
 
 
-def get_operator_by_id(id):
-    db_cursor.execute(f"SELECT * FROM Operator WHERE id={id} LIMIT 1;")
+def get_operator_by_id(ident):
+    db_cursor.execute(f"SELECT * FROM nsd.Operator WHERE id={ident} LIMIT 1;")
     operator_data = db_cursor.fetchone()
     connection.commit()
     return {
         "id": operator_data[0],
         "name": operator_data[1],
-        "surname": operator_data[2],
-        "email": operator_data[3],
-        "password_hash": operator_data[4]
+        "email": operator_data[2],
+        "password_hash": operator_data[3],
+        "is_banned": operator_data[4]
+    }
+
+
+def get_digital_asset_by_id(ident):
+    query = f"SELECT * FROM nsd.DigitalAsset WHERE id={ident} LIMIT 1;"
+    db_cursor.execute(query)
+    asset_data = db_cursor.fetchone()
+    connection.commit()
+    return {
+        "id": asset_data[0],
+        "name": asset_data[1],
+        "who_approve": asset_data[2],
+        "balance": asset_data[3],
+        "percent": asset_data[4],
+        "quantity": asset_data[5],
+        "due_to": asset_data[6],
+        "is_approved": asset_data[7],
+        "is_banned": asset_data[8],
+        "owner_id": asset_data[9]
     }
 
 
@@ -49,6 +164,8 @@ def clientIssuer(f):
         if acc_type is None:
             return redirect(url_for("authorization"))
         elif acc_type == "client" or acc_type == "issuer":
+            if get_client_by_id(session.get("id"))['is_banned']:
+                return redirect(url_for("banned"))
             return f(*args, **kwargs)
         else:
             if acc_type == "issuer":
@@ -69,24 +186,11 @@ def operator(f):
                 acc_type = "client"
             return redirect(url_for(f'{acc_type}_index'))
         else:
+            if get_operator_by_id(session.get("id"))['is_banned']:
+                return redirect(url_for("banned"))
             return f(*args, **kwargs)
 
     return decorated_function
-
-
-def agent(f):
-    @wraps(f)
-    def deocrated_function(*args, **kwargs):
-        acc_type = session.get("account_type", None)
-        if acc_type is None:
-            return redirect(url_for("authorization"))
-        elif acc_type != "agent":
-            if acc_type == "issuer":
-                acc_type = "client"
-            return redirect(url_for(f'{acc_type}_index'))
-        else:
-            return f(*args, **kwargs)
-    return deocrated_function
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -102,13 +206,11 @@ def authorization():
             if all([email, password]):
                 password_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
                 db_cursor.execute(
-                    f"SELECT id, is_issuer FROM Client WHERE email='{email}' AND password_hash='{password_hash}' LIMIT 1")
+                    f"SELECT id, is_issuer FROM nsd.Client WHERE email='{email}' AND password_hash='{password_hash}' LIMIT 1")
                 client_user = db_cursor.fetchone()
                 db_cursor.execute(
-                    f"SELECT id FROM Operator WHERE email='{email}' AND password_hash='{password_hash}' LIMIT 1")
+                    f"SELECT id FROM nsd.Operator WHERE email='{email}' AND password_hash='{password_hash}' LIMIT 1")
                 operator_user = db_cursor.fetchone()
-                db_cursor.execute(f"SELECT id FROM Agent WHERE email='{email}' AND password_hash='{password_hash}'")
-                agent_user = db_cursor.fetchone()
                 connection.commit()
                 if client_user:
                     session['id'] = client_user[0]
@@ -118,10 +220,6 @@ def authorization():
                     session['id'] = operator_user[0]
                     session['account_type'] = "operator"
                     return redirect(url_for("operator_index"))
-                elif agent_user:
-                    session['id'] = agent_user[0]
-                    session['account_type'] = "agent"
-                    return redirect(url_for("agent_index"))
                 else:
                     error = "Пользователя с такими данными не найдено!"
             else:
@@ -144,10 +242,12 @@ def registration():
             password = request.form.get("password", False)
             password_repeat = request.form.get("password_repeat", False)
             account_type = request.form.get("account_type", False)
-            if all([name, inn, email, password, password_repeat, account_type]) and\
-                    password == password_repeat and\
+            address = request.form.get("address", False)
+            if all([name, inn, email, password, password_repeat, account_type, address]) and \
+                    password == password_repeat and \
                     (len(inn) == 10 or len(inn) == 12):
                 name = name.replace("'", "''")
+                address = address.replace("'", "''")
                 if account_type == "client":
                     account_type_id = 0
                 elif account_type == "issuer":
@@ -155,8 +255,9 @@ def registration():
                 else:
                     return render_template("registration.html", error="Неверный тип аккаунта!")
                 password_hash = hashlib.sha256(password.encode("utf-8")).hexdigest()
-                query = f"INSERT INTO Client (name, inn, email, password_hash, is_issuer) VALUES " \
-                        f"('{name}', '{inn}', '{email}', '{password_hash}', {account_type_id});"
+                query = f"INSERT INTO nsd.Client (name, inn, email, password_hash, is_issuer, who_approve, address) VALUES " \
+                        f"('{name}', '{inn}', '{email}', '{password_hash}', {account_type_id}," \
+                        f" (SELECT id FROM nsd.Operator WHERE is_banned=FALSE ORDER BY RAND() LIMIT 1), '{address}');"
                 try:
                     db_cursor.execute(query)
                     connection.commit()
@@ -188,16 +289,47 @@ def client_index():
     return render_template("client_index.html", account_data=get_client_by_id(session['id']))
 
 
-@app.route("/agent/")
-@agent
-def agent_index():
-    return render_template("agent_index.html")
-
-
 @app.route("/operator/")
 @operator
 def operator_index():
-    return render_template("operator_index.html")
+    operator_data = get_operator_by_id(session.get("id"))
+    return render_template("operator_index.html", name=operator_data['name'])
+
+
+@app.route("/operator/users", methods=["GET", "POST"])
+@operator
+def operator_users():
+    if request.method == "POST":
+        client_id = request.form.get("client_id", None)
+        solution = request.form.get("solution", None)
+        if solution and client_id:
+            client_data = get_client_by_id(client_id)
+            if client_data['who_approve'] == session.get("id"):
+                if solution == "approve":
+                    approve_client(client_id)
+                    # TODO Открытие счёта в Blockchain
+                else:
+                    ban_client(client_id)
+    client = get_client_for_approval(session.get("id"))
+    return render_template("operator_users.html", client=client)
+
+
+@app.route("/operator/assets", methods=["GET", "POST"])
+@operator
+def operator_users():
+    if request.method == "POST":
+        asset_id = request.form.get("asset_id", None)
+        solution = request.form.get("solution", None)
+        if solution and asset_id:
+            client_data = get_digital_asset_by_id(asset_id)
+            if client_data['who_approve'] == session.get("id"):
+                if solution == "approve":
+                    approve_asset(asset_id)
+                    # TODO Выдача токенов
+                else:
+                    ban_asset(asset_id)
+    asset = get_digital_asset_for_approval(session.get("id"))
+    return render_template("operator_users.html", asset=asset)
 
 
 @app.route("/approval")
@@ -207,6 +339,20 @@ def approval():
     if client_data["is_approved"]:
         return redirect(url_for("client_index"))
     return render_template("approval_sent.html")
+
+
+@app.route("/banned")
+def banned():
+    user_id = session.get("id", None)
+    if user_id:
+        acc_type = session.get("account_type")
+        if acc_type == "client" or acc_type == "issuer":
+            user_data = get_client_by_id(session.get("id"))
+        else:
+            user_data = get_operator_by_id(session.get("id"))
+        if user_data["is_banned"]:
+            return render_template("banned.html")
+    return redirect(url_for("authorization"))
 
 
 if __name__ == '__main__':

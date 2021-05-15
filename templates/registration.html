@@ -40,15 +40,17 @@
             </div>
             <br><br>
             <label class="label">Данные аккаунта</label>
-            <input class="input is-medium" name="name" placeholder="Имя Фамилия/Название организации" type="text">
+            <input class="input is-medium" name="name" placeholder="Имя Фамилия/Название организации" type="text" required>
             <br><br>
-            <input class="input is-medium" name="inn" placeholder="ИНН" minlength="10" maxlength="12" type="number">
+            <input class="input is-medium" name="inn" placeholder="ИНН" minlength="10" maxlength="12" type="number" required>
             <br><br>
-            <input class="input is-medium" name="email" placeholder="Почта" type="text">
+            <input class="input is-medium" name="address" placeholder="Адрес" minlength="10" maxlength="512" type="text" required>
             <br><br>
-            <input class="input is-medium" name="password" placeholder="Пароль" type="password">
+            <input class="input is-medium" name="email" minlength="6" maxlength="128" placeholder="Почта" type="text" required>
             <br><br>
-            <input class="input is-medium" name="password_repeat" placeholder="Повтор пароля" type="password">
+            <input class="input is-medium" name="password" minlength="8" maxlength="32" placeholder="Пароль" type="password" required>
+            <br><br>
+            <input class="input is-medium" name="password_repeat" minlength="8" maxlength="32" placeholder="Повтор пароля" type="password" required>
             <br><br>
             <label class="checkbox">
                 <input class="checkbox" type="checkbox" name="pp_agree" required>
