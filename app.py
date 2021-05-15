@@ -14,7 +14,7 @@ db_cursor.execute("USE nsd;")
 
 def get_client_by_id(id):
     db_cursor.execute(f"SELECT * FROM Client WHERE id={id} LIMIT 1;")
-    client_data = db_cursor.fetchall()[0]
+    client_data = db_cursor.fetchone()
     connection.commit()
     return {
         "id": client_data[0],
@@ -26,6 +26,19 @@ def get_client_by_id(id):
         "is_issuer": client_data[6],
         "is_approved": client_data[7],
         "is_banned": client_data[8]
+    }
+
+
+def get_operator_by_id(id):
+    db_cursor.execute(f"SELECT * FROM Operator WHERE id={id} LIMIT 1;")
+    operator_data = db_cursor.fetchone()
+    connection.commit()
+    return {
+        "id": operator_data[0],
+        "name": operator_data[1],
+        "surname": operator_data[2],
+        "email": operator_data[3],
+        "password_hash": operator_data[4]
     }
 
 
