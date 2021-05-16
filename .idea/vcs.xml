@@ -4,6 +4,7 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Hyperledgerfabric/ethereum-docker" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/Hyperledgerfabric/fabric-sdk-py" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ethereum-docker" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fabric-samples" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/fabric-samples/test-network/fabric-samples" vcs="Git" />
   </component>
