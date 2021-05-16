@@ -42,9 +42,7 @@ def approve_asset(asset_id):
     connection.commit()
     asset = get_digital_asset_by_id(asset_id)
     owner = get_client_by_id(asset['owner_id'])
-    new_balance = float(owner['balance']) - float(asset['balance'])
-    if new_balance <= -3000:
-        ban_client(owner['id'])
+    new_balance = float(owner['balance']) + float(asset['balance'])
     query = f"UPDATE nsd.Client SET balance={new_balance} WHERE id={owner['id']}"
     db_cursor.execute(query)
     connection.commit()
