@@ -45,8 +45,9 @@
                 <div class="card-content">
                     <p class="title">{{ asset['name'] }}</p><br>
                     <p class="subtitle">
+                        Эмитент: {{ asset['owner'] }}<br>
                         Сумма: {{ asset['balance'] }}<br>
-                        Количество: {{ asset['inn'] }}<br>
+                        Количество: {{ asset['quantity'] }}<br>
                         Процент: {{ asset['percent'] }}<br>
                         Действителен до: {{ asset['due_to'] }}
                     </p>

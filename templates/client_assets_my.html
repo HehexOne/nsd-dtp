@@ -5,7 +5,7 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Главная страница</title>
+    <title>Мои активы</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
     <style>
         body {
@@ -22,22 +22,23 @@
 
         main {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             justify-content: center;
-            flex-wrap: wrap;
             align-items: center;
+            flex-wrap: wrap;
             width: 100%;
         }
 
-        #main-block {
+        .main-block {
             display: flex;
             flex-direction: row;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             width: 90%;
         }
 
         .card {
+            margin: 10px;
             max-width: 400px;
         }
     </style>
@@ -56,31 +57,60 @@
         </div>
     </div>
 </nav>
-<h1 style="margin-top: 30px;" class="title has-text-centered">Активы</h1>
 <main>
-    <div id="main-block">
+    {% if mao %}
+    <h1 class="title">Мои активы</h1>
+    <div class="main-block">
+        {% for asset in mao %}
+        <div class="card">
+            <div class="card-content">
+                <p class="title">{{ asset['name'] }}</p>
+                <p class="subtitle">
+                    Сумма: {{ asset['balance'] }}<br>
+                    Количество: {{ asset['quantity'] }}<br>
+                    Процент: {{ asset['percent'] }}<br>
+                    Действителен до: {{ asset['due_to'] }}
+                </p>
+            </div>
+            <footer class="card-footer">
+                {% if account_data['is_issuer'] %}
+                <button class="is-primary is-fullwidth is-outlined is-light card-footer-item" disabled>{% if
+                    asset['is_approved'] and not asset['is_banned'] %}
+                    Актив запущен{% elif asset['is_banned'] %}
+                    Актив заблокирован{% else %}Актив на подтверждении{% endif %}
+                </button>
+                {% endif %}
+            </footer>
+        </div>
+        {% endfor %}
+    </div>
+    <h1 class="title">Токены</h1>
+    {% endif %}
+    <div class="main-block">
         {% for asset in assets %}
         <div class="card">
             <div class="card-content">
-                <p class="title">{{ client['name'] }}</p>
+                <p class="title">Токен</p>
                 <p class="subtitle">
-                        Сумма: {{ asset['balance'] }}<br>
-                        Количество: {{ asset['inn'] }}<br>
-                        Процент: {{ asset['percent'] }}<br>
-                        Действителен до: {{ asset['due_to'] }}
-                    </p>
+                    Родительский актив: {{ asset['name'] }}<br>
+                    Эмитент: {{ asset['parent'] }}<br>
+                    Количество всего: {{ asset['quantity'] }}<br>
+                    Процент: {{ asset['percent'] }}<br>
+                    Действителен до: {{ asset['due_to'] }}
+                </p>
             </div>
             <footer class="card-footer">
-                {% if not asset['is_approved'] %}
-                    <a class="card-footer-item button is-primary is-medium" href="/operator/approve-asset?asset_id={{ asset['id'] }}">Одобрить</a>
-                {% else %}
-                    <button class="card-footer-item button is-medium" disabled>Доступ разрешён</button>
+                {% if account_data['is_issuer'] %}
+                <button class="is-medium is-fullwidth card-footer-item" disabled>{% if asset['is_approved'] and not
+                    asset['is_banned'] %}
+                    Актив запущен{% elif asset['is_banned'] %}
+                    Актив заблокирован{% else %}Актив на подтверждении{% endif %}
+                </button>
                 {% endif %}
 
                 {% if not asset['is_banned'] %}
-                    <a class="card-footer-item button is-danger is-medium" href="/operator/asset-client?asset_id={{ asset['id'] }}">Заблокировать</a>
-                {% else %}
-                    <a class="card-footer-item button is-danger is-outlined is-medium" href="/operator/asset-client?asset_id={{ asset['id'] }}">Разблокировать</a>
+                <a class="button is-warning is-medium card-footer-item is-fullwidth"
+                   href="/client/transfer?asset_token={{ asset['token'] }}">Передать актив</a>
                 {% endif %}
             </footer>
         </div>

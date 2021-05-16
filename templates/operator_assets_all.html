@@ -62,10 +62,10 @@
         {% for asset in assets %}
         <div class="card">
             <div class="card-content">
-                <p class="title">{{ client['name'] }}</p>
+                <p class="title">{{ asset['name'] }}</p>
                 <p class="subtitle">
                         Сумма: {{ asset['balance'] }}<br>
-                        Количество: {{ asset['inn'] }}<br>
+                        Количество: {{ asset['quantity'] }}<br>
                         Процент: {{ asset['percent'] }}<br>
                         Действителен до: {{ asset['due_to'] }}
                     </p>
@@ -78,9 +78,9 @@
                 {% endif %}
 
                 {% if not asset['is_banned'] %}
-                    <a class="card-footer-item button is-danger is-medium" href="/operator/asset-client?asset_id={{ asset['id'] }}">Заблокировать</a>
+                    <a class="card-footer-item button is-danger is-medium" href="/operator/ban-asset?asset_id={{ asset['id'] }}">Заблокировать</a>
                 {% else %}
-                    <a class="card-footer-item button is-danger is-outlined is-medium" href="/operator/asset-client?asset_id={{ asset['id'] }}">Разблокировать</a>
+                    <a class="card-footer-item button is-danger is-outlined is-medium" href="/operator/unban-asset?asset_id={{ asset['id'] }}">Разблокировать</a>
                 {% endif %}
             </footer>
         </div>

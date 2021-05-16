@@ -1,3 +1,4 @@
+from datetime import datetime
 from functools import wraps
 from flask import Flask, session, request, render_template, redirect, url_for
 import hashlib
@@ -37,6 +38,11 @@ def ban_asset(asset_id):
 
 def approve_asset(asset_id):
     query = f"UPDATE nsd.DigitalAsset SET is_approved=TRUE WHERE id={asset_id}"
+    db_cursor.execute(query)
+    connection.commit()
+    asset = get_digital_asset_by_id(asset_id)
+    owner = get_client_by_id(asset['owner_id'])
+    query = f"UPDATE nsd.Client SET balance={float(owner['balance']) - float(asset['balance'])} WHERE id={owner['id']}"
     db_cursor.execute(query)
     connection.commit()
 
@@ -98,32 +104,39 @@ def get_client_by_id(ident):
     db_cursor.execute(f"SELECT * FROM nsd.Client WHERE id={ident} LIMIT 1;")
     client_data = db_cursor.fetchone()
     connection.commit()
-    return {
-        "id": client_data[0],
-        "name": client_data[1],
-        "inn": client_data[2],
-        "address": client_data[3],
-        "email": client_data[4],
-        "password_hash": client_data[5],
-        "balance": client_data[6],
-        "is_issuer": client_data[7],
-        "is_approved": client_data[8],
-        "is_banned": client_data[9],
-        "who_approve": client_data[10]
-    }
+    if client_data:
+        return {
+            "id": client_data[0],
+            "name": client_data[1],
+            "inn": client_data[2],
+            "address": client_data[3],
+            "email": client_data[4],
+            "password_hash": client_data[5],
+            "balance": client_data[6],
+            "is_issuer": client_data[7],
+            "is_approved": client_data[8],
+            "is_banned": client_data[9],
+            "who_approve": client_data[10]
+        }
+
+    else:
+        return None
 
 
 def get_operator_by_id(ident):
     db_cursor.execute(f"SELECT * FROM nsd.Operator WHERE id={ident} LIMIT 1;")
     operator_data = db_cursor.fetchone()
     connection.commit()
-    return {
-        "id": operator_data[0],
-        "name": operator_data[1],
-        "email": operator_data[2],
-        "password_hash": operator_data[3],
-        "is_banned": operator_data[4]
-    }
+    if operator_data:
+        return {
+            "id": operator_data[0],
+            "name": operator_data[1],
+            "email": operator_data[2],
+            "password_hash": operator_data[3],
+            "is_banned": operator_data[4]
+        }
+    else:
+        return None
 
 
 def get_digital_asset_by_id(ident):
@@ -131,18 +144,53 @@ def get_digital_asset_by_id(ident):
     db_cursor.execute(query)
     asset_data = db_cursor.fetchone()
     connection.commit()
-    return {
-        "id": asset_data[0],
-        "name": asset_data[1],
-        "who_approve": asset_data[2],
-        "balance": asset_data[3],
-        "percent": asset_data[4],
-        "quantity": asset_data[5],
-        "due_to": asset_data[6],
-        "is_approved": asset_data[7],
-        "is_banned": asset_data[8],
-        "owner_id": asset_data[9]
-    }
+    if asset_data:
+        return {
+            "id": asset_data[0],
+            "name": asset_data[1],
+            "who_approve": asset_data[2],
+            "balance": asset_data[3],
+            "percent": asset_data[4],
+            "quantity": asset_data[5],
+            "due_to": asset_data[6],
+            "is_approved": asset_data[7],
+            "is_banned": asset_data[8],
+            "owner_id": asset_data[9]
+        }
+    else:
+        return None
+
+
+def get_asset_token_by_id(ident):
+    query = f"SELECT * FROM nsd.DigitalAssetToken WHERE id={ident} LIMIT 1"
+    db_cursor.execute(query)
+    result = db_cursor.fetchone()
+    connection.commit()
+    if result:
+        return {
+            "id": result[0],
+            "token": result[1],
+            "holder_id": result[2],
+            "parent_asset": result[3]
+        }
+    else:
+        return None
+
+
+def get_asset_token_by_token(token):
+    query = f"SELECT * FROM nsd.DigitalAssetToken WHERE token='{token}' LIMIT 1"
+    db_cursor.execute(query)
+    result = db_cursor.fetchone()
+    connection.commit()
+    if result:
+        return {
+            "id": result[0],
+            "token": result[1],
+            "holder_id": result[2],
+            "parent_asset": result[3]
+        }
+    else:
+        return None
 
 
 def clientIssuer(f):
@@ -314,11 +362,19 @@ def operator_assets():
             if client_data['who_approve'] == session.get("id"):
                 if solution == "approve":
                     approve_asset(asset_id)
-                    # TODO Выдача токенов
+                    asset_data = get_digital_asset_by_id(asset_id)
+                    for n in range(int(asset_data['quantity'])):
+                        token = hashlib.sha512((asset_data['name'] + str(n)).encode("utf-8")).hexdigest()
+                        query = f"INSERT INTO nsd.DigitalAssetToken (token, holder_id, parent_asset) VALUES " \
+                                f"('{token}', {asset_data['owner_id']}, {asset_data['id']})"
+                        db_cursor.execute(query)
+                        connection.commit()
                 else:
                     ban_asset(asset_id)
     asset = get_digital_asset_for_approval(session.get("id"))
-    return render_template("operator_clients.html", asset=asset)
+    if asset:
+        asset['owner'] = get_client_by_id(asset["owner_id"])['name']
+    return render_template("operator_assets.html", asset=asset)
 
 
 @app.route("/operator/clients-all")
@@ -420,6 +476,7 @@ def operator_approve_asset():
 
 
 @app.route("/client/payment", methods=["GET", "POST"])
+@clientIssuer
 def client_payment():
     if request.method == "POST":
         amount = request.form.get("amount")
@@ -431,6 +488,87 @@ def client_payment():
             connection.commit()
             return redirect(url_for("client_index"))
     return render_template("clients_payment.html")
+
+
+@app.route("/client/assets-my")
+@clientIssuer
+def client_assets_my():
+    account_data = get_client_by_id(session.get("id"))
+    mao = None
+    if account_data['is_issuer']:
+        query = f"SELECT id FROM nsd.DigitalAsset WHERE owner_id={account_data['id']}"
+        db_cursor.execute(query)
+        result = db_cursor.fetchall()
+        connection.commit()
+        mao = []
+        for asset in result:
+            mao.append(get_digital_asset_by_id(asset[0]))
+        query = f"SELECT nsd.DigitalAssetToken.id FROM nsd.DigitalAssetToken INNER JOIN nsd.DigitalAsset" \
+                f" ON DigitalAssetToken.parent_asset = DigitalAsset.id WHERE owner_id={account_data['id']} " \
+                f"AND holder_id={account_data['id']}"
+    else:
+        query = f"SELECT id FROM nsd.DigitalAssetToken WHERE holder_id={account_data['id']}"
+    db_cursor.execute(query)
+    result = db_cursor.fetchall()
+    connection.commit()
+    assets = []
+    for asset in result:
+        asset_token = get_asset_token_by_id(asset[0])
+        asset_obj = get_digital_asset_by_id(asset_token['parent_asset'])
+        parent = get_client_by_id(asset_obj['owner_id'])['name']
+        asset_obj.update(asset_token)
+        asset_obj['parent'] = parent
+        assets.append(asset_obj)
+    return render_template("client_assets_my.html", account_data=account_data, assets=assets, mao=mao)
+
+
+@app.route("/client/assets-create", methods=["GET", "POST"])
+@clientIssuer
+def client_assets_create():
+    client_data = get_client_by_id(session.get("id"))
+    if not client_data['is_issuer']:
+        return redirect(url_for("client_index"))
+    if request.method == "POST":
+        name = request.form.get("name", False)
+        balance = request.form.get("balance", False)
+        quantity = request.form.get("quantity", False)
+        percent = request.form.get("percent", False)
+        due_to = request.form.get("due_to", False)
+        if all([name, balance, quantity, percent, due_to]):
+            name = name.replace("'", "''")
+            due_to = datetime.strptime(due_to, '%Y-%m-%dT%H:%M')
+            query = f"INSERT INTO nsd.DigitalAsset (name, who_approve, balance, percent, quantity, due_to, owner_id)" \
+                    f" VALUES ('{name}', (SELECT id FROM nsd.Operator WHERE is_banned=FALSE ORDER BY RAND() LIMIT 1)," \
+                    f"{balance}, {percent}, {quantity}, '{due_to}', {client_data['id']})"
+            db_cursor.execute(query)
+            connection.commit()
+            return redirect(url_for("client_assets_my"))
+    return render_template("client_assets_create.html", client_data=client_data)
+
+
+# /client/transfer?asset_token={{ asset['token'] }}
+@app.route("/client/transfer", methods=["GET", "POST"])
+@clientIssuer
+def client_transfer():
+    asset_token = request.args.get("asset_token", False)
+    if not asset_token:
+        return redirect(url_for("client_index"))
+    if request.method == "POST":
+        to_client_id = request.form.get("to_client", False)
+        if to_client_id:
+            token = get_asset_token_by_token(asset_token)
+            parent = get_digital_asset_by_id(token['parent_asset'])
+            from_client = get_client_by_id(session.get("id"))
+            to_client = get_client_by_id(to_client_id)
+            if token['holder_id'] == from_client['id'] and to_client and parent['is_approved']\
+                    and not parent['is_banned'] \
+                    and not from_client['is_banned'] and not to_client['is_banned'] \
+                    and from_client['is_approved'] and to_client['is_approved']:
+                query = f"UPDATE nsd.DigitalAssetToken SET holder_id={to_client['id']} WHERE token='{asset_token}'"
+                db_cursor.execute(query)
+                connection.commit()
+                return redirect(url_for("client_assets_my"))
+    return render_template("client_assets_transfer.html")
 
 
 @app.route("/approval")

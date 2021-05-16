@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Создание активов</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.2/css/bulma.min.css">
+    <style>
+        body {
+            margin: 0;
+            height: 90vh;
+        }
+
+        #center-section {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+    </style>
+</head>
+<body>
+<nav role="navigation" aria-label="main navigation" class="navbar">
+    <div style="padding: 10px;" class="navbar-menu is-active">
+        <div class="navbar-brand">
+            <a href="/operator/">
+                <img src="{{ url_for('static', filename='favicon.ico') }}" alt="Логотип">
+            </a>
+        </div>
+        <div class="navbar-end">
+            <a class="navbar-item button is-danger is-light is-outlined" href="/logout">Выйти</a>
+        </div>
+    </div>
+</nav>
+<section id="center-section" class="section">
+    <div class="columns">
+        <div class="column"></div>
+        <div class="column is-full">
+            <div class="card">
+                <div class="card-content">
+                    <p class="title">Выпуска ЦФА</p><br>
+                    <p class="subtitle">Заполните форму для выпуска ЦФА.<br>После заполнения потребуется подождать ~24
+                        часа.<br>Вашу заявку проверят наши специалисты.</p>
+                    <form action="" method="post">
+                        <br>
+                        <label class="label">Основные поля</label>
+                        <input class="input is-medium is-primary" name="name" placeholder="Название / Цель"
+                               type="text" minlength="8" maxlength="256" required>
+                        <br><br>
+                        <input class="input is-medium is-primary" name="balance" placeholder="Количество денег"
+                               type="number" step="0.01" min="1" max="10000000" required>
+                        <br><br>
+                        <input class="input is-medium is-primary" name="quantity" placeholder="Количество токенов"
+                               type="number" step="1" min="1" max="10000000" required>
+                        <br><br>
+                        <input class="input is-medium is-primary" name="percent" placeholder="Процент (%)"
+                               type="number" step="0.01" min="-10000000" max="10000000" required>
+                        <br><br>
+                        <label class="label">Выберите дату окончания</label>
+                        <input class="input is-medium is-primary" name="due_to" placeholder="Дата окончания"
+                               type="datetime-local" required>
+                        <br><br>
+                        <button type="submit" class="button is-fullwidth is-primary">Создать</button>
+                        <div style="height: 10px" class="is-fullwidth"></div>
+                        <a class="button is-fullwidth is-danger is-light is-outlined" href="/client/">Отмена</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="column"></div>
+    </div>
+</section>
+</body>
+</html>
