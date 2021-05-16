@@ -111,6 +111,8 @@
                 {% if not asset['is_banned'] %}
                 <a class="button is-warning is-medium card-footer-item is-fullwidth"
                    href="/client/transfer?asset_token={{ asset['token'] }}">Передать актив</a>
+                {% else %}
+                <button class="is-medium is-fullwidth card-footer-item" disabled>Актив заблокирован</button>
                 {% endif %}
             </footer>
         </div>
